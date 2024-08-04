@@ -3,6 +3,7 @@ import polars as pl
 from .utils import register_plugin, parse_version
 from ._polars_talib import initialize, shutdown, version
 from pathlib import Path
+import numpy as np
 
 
 __talib_version__ = version()
@@ -87,6 +88,7 @@ __function_groups__ = {
         "bbands",
         "dema",
         "ema",
+        'ema_volume_milli',
         "ht_trendline",
         "kama",
         "ma",
@@ -101,6 +103,7 @@ __function_groups__ = {
         "tema",
         "trima",
         "wma",
+        'hma'
     ],
     "Pattern Recognition": [
         "cdl2crows",
@@ -178,7 +181,7 @@ __function_groups__ = {
         "var",
     ],
     "Volatility Indicators": ["atr", "natr", "trange"],
-    "Volume Indicators": ["ad", "adosc", "obv"],
+    "Volume Indicators": ["ad", "adosc", "obv", "obv_milli"],
 }
 
 
@@ -1898,6 +1901,20 @@ class TAExpr:
             symbol="wma",
             is_elementwise=False,
         )
+
+    def hma(self, period: int = 16) -> pl.Expr:
+        """Hull Moving Average
+        ta.pol("close").ta.hma(period=16)
+        Inputs:
+            real: (any ndarray)
+        Parameters:
+            period: 10
+        Outputs:
+            real
+        """
+        wma_half = self.wma(timeperiod=period // 2)
+        wma_full = self.wma(timeperiod=period)
+        return (2 * wma_half - wma_full).ta.wma(timeperiod=int(np.sqrt(period)))
 
     def natr(
         self, high: IntoExpr = pl.col("high"), low: IntoExpr = pl.col("low"), timeperiod: int = 14
@@ -4775,6 +4792,24 @@ def ema(
     return real.ta.ema(timeperiod=timeperiod)
 
 
+def ema_volume_milli(
+    real: IntoExpr = pl.col("volume"),
+    timeperiod: int = 30,
+) -> pl.Expr:
+    """Exponential Moving Average (Overlap Studies)
+    pl.col("close").ta.ema(timeperiod=30)
+
+    Inputs:
+        real
+    Parameters:
+        timeperiod: 30
+    Outputs:
+        real
+    """
+    real = real // 1000;
+    return real.ta.ema(timeperiod=timeperiod).floor()
+
+
 def ht_trendline(
     real: IntoExpr = pl.col("close"),
 ) -> pl.Expr:
@@ -5046,6 +5081,22 @@ def wma(
         real
     """
     return real.ta.wma(timeperiod=timeperiod)
+
+
+def hma(
+    real: IntoExpr = pl.col("close"),
+    period: int = 16,
+) -> pl.Expr:
+    """Hull Moving Average
+    pl.col("close").ta.hma(period=16)
+    Inputs:
+        real
+    Parameters:
+        period: 16
+    Outputs:
+        real
+    """
+    return real.ta.hma(period=period)
 
 
 def cdl2crows(
@@ -6500,3 +6551,18 @@ def obv(
         obv
     """
     return close.ta.obv(volume)
+
+
+def obv_milli(
+    close: IntoExpr = pl.col("close"),
+    volume: IntoExpr = pl.col("volume"),
+):
+    """On Balance Volume (Volume Indicators)
+    pl.col("close").ta.obv(pl.col("volume"))
+
+    Inputs:
+        prices: ['close', 'volume']
+    Outputs:
+        obv
+    """
+    return close.ta.obv(volume // 1000) // 1000
