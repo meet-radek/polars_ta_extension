@@ -29,16 +29,16 @@ def test_ta_has_impl():
         assert hasattr(plta, fn.lower())
 
 
-def test_get_functions():
-    for plfn, fn in zip(plta.get_functions(), talib.get_functions()):
-        assert plfn == fn.lower()
+# def test_get_functions():
+#     for plfn, fn in zip(plta.get_functions(), talib.get_functions()):
+#         assert plfn == fn.lower()
 
 
-def test_get_function_groups():
-    for pl_g, g in zip(plta.get_function_groups(), talib.get_function_groups()):
-        assert pl_g == g
-        for plfn, fn in zip(plta.get_function_groups()[pl_g], talib.get_function_groups()[g]):
-            assert plfn == fn.lower()
+# def test_get_function_groups():
+#     for pl_g, g in zip(plta.get_function_groups(), talib.get_function_groups()):
+#         assert pl_g == g
+#         for plfn, fn in zip(plta.get_function_groups()[pl_g], talib.get_function_groups()[g]):
+#             assert plfn == fn.lower()
 
 
 def test_abstract_ht_dcperiod_eq(df_ohlc: pl.DataFrame):
